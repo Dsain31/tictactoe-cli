@@ -34,8 +34,11 @@ export default class UserController {
     return users.find((user) => user.username === username);
   }
 
-  joinPlayer(username: string) {
-    const users = [...this.players.values(), ...this.queue];
-    console.log('users', users);
+  addOneStore(): Player[] {
+    const onePlayer = [this.queue[0]];
+    const [p1] = onePlayer;
+    this.players.set(p1.socket.id, p1);
+    return onePlayer;
+
   }
 }

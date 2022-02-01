@@ -1,3 +1,4 @@
+import { Socket } from "socket.io";
 import Game from "../lib/game";
 import { SystemConstants } from "../utils/constants/system.constants";
 
@@ -17,10 +18,19 @@ export default class MultiplayerRoomController {
   remove(gameID: any) {
     this.ongoing.delete(gameID);
   }
-  getCurrentRoomID(socket: { rooms: any; }) {
+  getCurrentRoomID(socket: Socket) {
     const roomID = [...socket.rooms].find((room) =>
       `${room}`.includes(SystemConstants.roomPrefix)
-    );
+    )!;
     return roomID;
+  }
+
+  generateRoomId() {
+    return `${SystemConstants.roomPrefix}${SystemConstants.genKey()}`;
+  }
+  createRoom(roomId: string, participants: any[]) {
+    const game = new Game(roomId, participants);
+    this.ongoing.set(game.gameID, game);
+    return game;
   }
 }

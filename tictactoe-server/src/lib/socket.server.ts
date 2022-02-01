@@ -11,6 +11,7 @@ export class SocketServer {
 
   public connect() {
     this.io.on('connection', (_socket) => {
+      // console.log('rooms', this.io.sockets.adapter.rooms)
       console.log(`New user connected to the server: ${_socket.id}`);
       // _socket.on("enter", (username) => {
       //   console.log(`${_socket.id} has entered.`);
@@ -19,14 +20,14 @@ export class SocketServer {
       _socket.on("enter", (data) => {
         console.log(`${_socket.id} : ${data} has entered.`);
         this.app.handleEnter(_socket, data);
-        console.log('rooms', this.io.sockets.adapter.rooms)
-        this.getUserDataFromRooms(_socket.id)
+        // console.log('rooms', this.io.sockets.adapter.rooms);
+        // this.getUserDataFromRooms(_socket.id)
       });
       _socket.on("enter-join", (data) => {
         console.log(`${_socket.id} : ${data} has joined.`);
 
         // _socket.join(_socket.id);
-        // this.app.handleJoin(_socket, data);
+        this.app.handleJoin(_socket, data, this.io.sockets.adapter.rooms);
         // this.app.handleEnter(_socket, data);
       });
       _socket.on("move", (move) => {

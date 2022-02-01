@@ -30,7 +30,7 @@ const warning = blessed.text({
 });
 const boardLayout = blessed.layout({
   parent: screen,
-  top: '10',
+  top: 'center',
   left: "center",
   width: "50%",
   height: "50%",
@@ -232,7 +232,6 @@ function promptOption(callback: (arg0: any) => void) {
     height: 3,
     name: "optionChosen",
     border: "line",
-    clickable: true,
     style: {
       border: {
         fg: "green",

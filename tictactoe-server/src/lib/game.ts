@@ -29,6 +29,9 @@ export default class Game {
       [pX]: "X",
       [pO]: "O",
     };
+    // this.participants = {
+    //   [pX]: "X",
+    // };
     this.replayConfirmed = 0;
   }
   /*
@@ -39,7 +42,7 @@ export default class Game {
     this._turn = "X";
     this.replayConfirmed = 0;
     // fill the board
-    Array.from(Array(9).keys()).forEach((c) => this.board.set(c + 1, null));
+    this.createKeyValuePairsMapObject();
   }
 
   // get status of the game
@@ -90,6 +93,17 @@ export default class Game {
       ...this.scoreboard,
       total: this.scoreboard.total + 1,
       [winner]: this.scoreboard[winner] + 1,
+    };
+  }
+
+  private createKeyValuePairsMapObject() {
+    Array.from(Array(9).keys()).forEach((c) => this.board.set(c + 1, null));
+  }
+
+  private createGameBoardAfterSecondPlayerJoined([pX, pO = undefined]: any) {
+    this.participants = {
+      [pX]: "X",
+      [pO]: "O",
     };
   }
 }

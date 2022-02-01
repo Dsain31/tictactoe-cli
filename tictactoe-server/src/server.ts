@@ -10,12 +10,12 @@ class Server extends AppExpress {
     this.httpServer = new http.Server(app);
     socketServer = new SocketServer(this.httpServer);
     socketServer.connect();
-    this.httpServer.listen(3000);
+    this.httpServer.listen(process.env.PORT || 3000);
     this.httpServer.on("error", (er: Error) => {
       console.error(`Server failed :: ${er}`)
     })
     this.httpServer.on("listening", () => {
-      console.error(`Server started at 3000 port`);
+      console.error(`Server started at ${process.env.PORT || 3000} port`);
     })
   }
 }

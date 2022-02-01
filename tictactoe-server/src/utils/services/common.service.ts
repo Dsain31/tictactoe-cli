@@ -1,3 +1,5 @@
+import { Socket } from "socket.io";
+import MultiplayerRoomController from "../../controllers/multiplayer-room.controller";
 import { SystemConstants } from "../constants/system.constants";
 
 export default class CommonService {
@@ -24,4 +26,8 @@ export default class CommonService {
   static checkIsTied(progress = ""): boolean {
     return progress.replace(/\n/g, "").split("").every((s) => s !== ".");
   };
+
+  // static getRoomName(socket: Socket) {
+  //   return new MultiplayerRoomController().getCurrentRoomID(socket)[0];
+  // }
 }
