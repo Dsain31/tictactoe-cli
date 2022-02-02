@@ -33,6 +33,7 @@ class ClientTest {
     this.checkGameIsOverOrNot();
     this.replayConfirm();
     this.disconnect();
+    this.getRoomList();
   }
 
   initializeConnection() {
@@ -161,6 +162,13 @@ class ClientTest {
     this.socket.on(SystemConstants.DISCONNECT_KEY, () => {
       print(SystemConstants.DISCONNECT_MSG);
       process.exit();
+    });
+  }
+
+  getRoomList() {
+    this.socket.on(SystemConstants.ROOM_LIST, (rooms) => {
+      const roomList = new Map(JSON.parse(rooms))
+      print('rooooms');
     });
   }
 }

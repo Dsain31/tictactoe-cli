@@ -12,20 +12,26 @@ export default class App {
   room: Map<any, any | PlayerMap>;
   userController: UserController;
   roomController: MultiplayerRoomController;
+  roomListData: Map<any, any | PlayerMap>;
   constructor(socketIO: Server) {
     this.io = socketIO;
     this.room = new Map();
+    this.roomListData = new Map();
     this.userController = new UserController();
     this.roomController = new MultiplayerRoomController();
   }
 
   handleEnter(socket: Socket, username: string) {
-    // console.log('this.room', this.room);
-    const exists = this.userController.checkExists(username);
-    if (exists) {
-      socket.emit(SystemConstants.UNAME_EXISTS_KEY, SystemConstants.USERNAME_EXISTS_MSG);
+    if (this.roomListData.size < SystemConstants.ROOM_LIMIT) {
+      const exists = this.userController.checkExists(username);
+      if (exists) {
+        socket.emit(SystemConstants.UNAME_EXISTS_KEY, SystemConstants.USERNAME_EXISTS_MSG);
+      } else {
+        this.addToQueueWhenUserNotExist(socket, username);
+      }
     } else {
-      this.addToQueueWhenUserNotExist(socket, username);
+      socket.disconnect();
+      socket.emit(SystemConstants.INFO_KEY, SystemConstants.ROOM_LIMIT_MSG);
     }
 
   }
@@ -83,7 +89,7 @@ export default class App {
       game.reset();
       game.init();
       this.io.to(roomID)
-        .emit(SystemConstants.SCOREBOARD_KEY, JSON.stringify(game.scoreboard));
+        .emit(SystemConstants.SCOREBOARD_KEY, JSON.stringify(this.room));
       this.io.to(roomID).emit(SystemConstants.INFO_KEY, SystemConstants.GAME_START_MSG);
       this.io.to(roomID).emit(SystemConstants.PROGRESS_KEY, game.progress);
     }
@@ -143,21 +149,29 @@ export default class App {
   }
 
   handleJoin(socket: Socket, username: string, rooms: any) {
-    // console.log('this.room', this.room);
     this.userController.add2Queue(socket, username);
     if (this.userController.queueSize >= 2) {
       const players = this.userController.add2Store();
       this.joinRoomHandler(players, socket, rooms)
     }
+    const roomList = JSON.stringify(Array.from(this.roomListData.entries()));
+    socket.emit(SystemConstants.ROOM_LIST, roomList);
   }
 
   private createRoomHandler(player: Player[]) {
     const [playerX, playerO] = player;
     const pXSocketID = playerX.socket.id;
+    const pXUsername = playerX.username;
     const roomID = this.roomController.generateRoomId();
     // players join the room
     playerX.socket.join(roomID);
+    this.room.set(roomID, {
+      playerX: pXUsername,
+    });
     this.room.set(pXSocketID, roomID);
+    this.roomListData.set(roomID, {
+      playerX: pXUsername,
+    });
   }
 
   private joinRoomHandler(player: Player[], socket: any, rooms: any) {
@@ -175,8 +189,17 @@ export default class App {
     playerO.socket.join(roomID);
     // roomID => players
     this.room.set(roomID, {
-      playerX: { id: pXSocketID, username: pXUsername },
-      playerO: { id: pOSocketID, username: pOUsername }
+      // playerX: { id: pXSocketID, username: pXUsername },
+      // playerO: { id: pOSocketID, username: pOUsername },
+      playerX: pXUsername,
+      playerO: pOUsername
+    });
+
+    this.roomListData.set(roomID, {
+      // playerX: { id: pXSocketID, username: pXUsername },
+      // playerO: { id: pOSocketID, username: pOUsername },
+      playerX: pXUsername,
+      playerO: pOUsername
     });
 
     // player => room
@@ -189,5 +212,10 @@ export default class App {
       .emit(SystemConstants.PROGRESS_KEY, newGame.progress);
     this.io.to(roomID)
       .emit(SystemConstants.SCOREBOARD_KEY, JSON.stringify(newGame.scoreboard));
+  }
+
+  getRoomList(socket?: Server) {
+    // socket.emit(SystemConstants.ROOM_LIST, JSON.stringify(this.room));
+    return this.room;
   }
 }

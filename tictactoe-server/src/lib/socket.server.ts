@@ -29,7 +29,9 @@ export class SocketServer {
 
         // _socket.join(_socket.id);
         this.app.handleJoin(_socket, data, this.io.sockets.adapter.rooms);
-        // this.app.handleEnter(_socket, data);
+        // const rooms = this.app.getRoomList();
+        // console.log(rooms);
+        // this.io.emit(SystemConstants.ROOM_LIST, JSON.stringify({ data: rooms }))
       });
       _socket.on(SystemConstants.MOVE_KEY, (move) => {
         console.log(`${_socket.id} has made move.`);

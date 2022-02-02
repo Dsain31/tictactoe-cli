@@ -25,5 +25,6 @@ export const SystemConstants = {
   INFO_KEY: "info",
   SCOREBOARD_KEY: "scoreboard",
   DISCONNECT_MSG: "Disconnected!",
-  TITLE: "Tic Tac Toe"
+  TITLE: "Tic Tac Toe",
+  ROOM_LIST: 'roomList'
 } as const;

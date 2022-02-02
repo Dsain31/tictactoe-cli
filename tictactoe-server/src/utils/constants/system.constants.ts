@@ -32,4 +32,7 @@ export const SystemConstants = {
   TIE_KEY: "tie",
   REPLAY_CONFIRM_KEY: "replayConfirm",
   DISCONNECT_KEY: "disconnect",
+  ROOM_LIST: 'roomList',
+  ROOM_LIMIT_MSG: 'Only 10 room can be created;',
+  ROOM_LIMIT: 9
 } as const;
