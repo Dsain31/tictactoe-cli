@@ -28,7 +28,6 @@ export default class App {
       } else {
         this.addToQueueWhenUserNotExist(socket, username);
       }
-      // console.log('roomList', this.roomListData)
     } else {
       socket.disconnect();
       socket.emit(SystemConstants.INFO_KEY, SystemConstants.ROOM_LIMIT_MSG);
@@ -110,7 +109,6 @@ export default class App {
     const player = this.userController.addOneStore();
     this.createRoomHandler(player);
     socket.emit(SystemConstants.INFO_KEY, SystemConstants.WAITING_MSG);
-    // console.log('roomList', this.roomListData)
   }
 
   handleJoin(socket: Socket, data: { username: string, roomName: string }) {
