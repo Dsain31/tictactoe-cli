@@ -117,6 +117,7 @@ const gameOver = blessed.text({
     fg: "cyan",
   },
 });
+
 function printScoreboard(scores: string) {
   scoreboard.setContent(scores);
   scoreboard.show();
@@ -196,11 +197,11 @@ function showGameOver(msg: string) {
 }
 
 function topHeaderText(scores: string) {
-  const testOptions = blessed.text({
+  const topOptions = blessed.text({
     parent: screen
   });
-  testOptions.setContent(scores);
-  testOptions.show();
+  topOptions.setContent(scores);
+  topOptions.show();
   screen.render();
 }
 
@@ -232,6 +233,52 @@ function promptOption(callback: (arg0: any) => void) {
   });
   screen.render();
 }
+
+function promptRoomOption(callback: (arg0: any) => void) {
+  const form = blessed.form({
+    parent: screen,
+    top: '90%',
+    align: "center",
+    left: "center",
+    bottom: 0
+  });
+  const question = blessed.textbox({
+    parent: form,
+    height: 3,
+    name: "optionChosen",
+    border: "line",
+    style: {
+      border: {
+        fg: "green",
+      },
+    },
+  });
+  question.readInput();
+  question.onceKey("enter", () => {
+    form.submit();
+  });
+  form.on("submit", (data: any) => {
+    callback(data);
+    hideBoard();
+    screen.remove(form);
+  });
+  screen.render();
+}
+
+
+function printInvalidMsg(msg: string) {
+  const warningMsg = blessed.text({
+    parent: screen,
+    left: "center",
+    align: "center",
+    style: {
+      fg: "yellow",
+    }
+  });
+  warningMsg.setContent(msg);
+  screen.render();
+}
+
 export {
   print,
   drawBoard,
@@ -241,5 +288,7 @@ export {
   printScoreboard,
   showGameOver,
   topHeaderText,
-  promptOption
+  promptOption,
+  promptRoomOption,
+  printInvalidMsg,
 };

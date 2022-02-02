@@ -5,9 +5,11 @@ export default class UserController {
   players!: Map<any, any>;
   queue!: Player[];
   users!: any[];
+  tempData: Player[];
   constructor() {
     this.players = new Map();
     this.queue = [];
+    this.tempData = [];
   }
   get queueSize() {
     return this.queue.length;
@@ -22,6 +24,7 @@ export default class UserController {
   add2Queue(socket: Socket, username: string) {
     const player = new Player(socket, username);
     this.queue.push(player);
+    this.tempData.push(player);
   }
   getPlayer(socketID: any) {
     return this.players.get(socketID);
@@ -36,9 +39,10 @@ export default class UserController {
   }
 
   addOneStore(): Player[] {
-    const onePlayer = [this.queue[0]];
+    const onePlayer = [this.tempData[0]];
     const [p1] = onePlayer;
     this.players.set(p1.socket.id, p1);
+    this.tempData = [];
     return onePlayer;
   }
 }

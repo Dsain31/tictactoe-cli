@@ -1,4 +1,4 @@
-import io from 'socket.io-client';
+import io, { Socket } from 'socket.io-client';
 import {
   print,
   drawBoard,
@@ -6,81 +6,97 @@ import {
   confirmReplay,
   askUsername,
   printScoreboard,
-  showGameOver,
-  topHeaderText,
-  promptOption
+  showGameOver
 } from './lib/blessed-configs';
+import CommonService from './utils/common.service';
 import { SystemConstants } from './utils/system.constants';
+class ClientTest {
+  address: string;
+  name: string;
+  socket: Socket;
+  hostName: string;
+  socketId: string;
+  constructor() {
+    this.address = process.argv[2];
+    this.hostName = CommonService.getHostByAddress(this.address);
+    this.name = process?.argv[3];
+    this.socket = io(this.hostName, { secure: true });
+    this.socketId = this.socket.id;
+    this.initializeConnection();
+    this.initializeScoreboard();
+    this.checkExistsUser();
+    this.playingProgressBoard();
+    this.showMessages();
+    this.checkGameIsOverOrNot();
+    this.replayConfirm();
+    this.disconnect();
+    this.getRoomList();
+  }
 
-const address = process.argv[2];
-let hostName = "http://localhost:3000";
-if (address && address.length > 0) {
-  const splitHostAndPort = address.split(':');
-  const ip = splitHostAndPort[0];
-  const portNumber = splitHostAndPort[1];
-  hostName = `http://${ip}:${portNumber}`;
-}
-const name = process.argv[3];
-const socket = io(hostName);
-socket.on("connect", () => {
-  console.log(`${SystemConstants.CONNECTION_MSG} ${name} (Choose an option)`);
-  topHeaderText(`1. Start New Game
-  2. Join a game
-  3. Spectate a game`)
-  promptOption((data: { optionChosen: any }) => {
-    console.log(['1', '2', '3'].includes(data.optionChosen));
-    if (!['1', '2', '3'].includes(data.optionChosen)) {
-      print("invalid option")
+  initializeConnection() {
+    this.socket.on(SystemConstants.CONNECT_KEY, () => {
+      CommonService.startNewGameHandler(this.socket, this.name);
+    });
+
+  }
+
+  checkExistsUser() {
+    this.socket.on(SystemConstants.UNAME_EXISTS_KEY, (msg) => {
+      print(msg);
+      askUsername((data: { username: any; }) => {
+        this.socket.emit(SystemConstants.ENTER_KEY, data.username);
+      });
+    });
+  }
+
+  playingProgressBoard() {
+    this.socket.on(SystemConstants.PROGRESS_KEY, (msg) => {
+      drawBoard(msg.split("|"), (move: any) => {
+        this.socket.emit(SystemConstants.MOVE_KEY, move);
+      });
+    });
+  }
+
+  showMessages() {
+    this.socket.on(SystemConstants.INFO_KEY, (msg) => {
+      print(msg);
       clearPrint();
-    }
-    const choseCases: any = {
-      [SystemConstants.START]: () => {
-        console.log(name)
-        socket.emit("enter", name)
-      },
-      [SystemConstants.JOIN]: () => {
+    });
+  }
 
-      },
-      [SystemConstants.SPECTATE]: () => {
+  checkGameIsOverOrNot() {
+    this.socket.on(SystemConstants.OVER_KEY, (msg) => {
+      showGameOver(msg);
+    });
+  }
 
-      }
-    }
-    choseCases[data.optionChosen]();
-    // socket.emit("connected", name);
+  replayConfirm() {
+    this.socket.on(SystemConstants.REPLAY_KEY, (msg) => {
+      confirmReplay(msg, (value: any) => {
+        this.socket.emit(SystemConstants.REPLAY_CONFIRM_KEY, value);
+      });
+    });
+  }
+  initializeScoreboard() {
+    this.socket.on(SystemConstants.SCOREBOARD_KEY, (msg) => {
+      const { total, X, O, tie } = JSON.parse(msg);
+      printScoreboard(`[Total: ${total} | X: ${X} | O: ${O} | tie: ${tie}]`);
+    });
+  }
 
-  })
-  // askUsername((data: any) => {
-  //   socket.emit("enter", data.username);
-  // });
-});
-socket.on("uname-exists", (msg) => {
-  print(msg);
-  askUsername((data: { username: any; }) => {
-    socket.emit("enter", data.username);
-  });
-});
-socket.on("progress", (msg) => {
-  drawBoard(msg.split("|"), (move: any) => {
-    socket.emit("move", move);
-  });
-});
-socket.on("info", (msg) => {
-  print(msg);
-  clearPrint();
-});
-socket.on("over", (msg) => {
-  showGameOver(msg);
-});
-socket.on("replay", (msg) => {
-  confirmReplay(msg, (value: any) => {
-    socket.emit("replayConfirm", value);
-  });
-});
-socket.on("scoreboard", (msg) => {
-  const { total, X, O, tie } = JSON.parse(msg);
-  printScoreboard(`[Total: ${total} | X: ${X} | O: ${O} | tie: ${tie}]`);
-});
-socket.on("disconnect", () => {
-  print("Disconnected 😞");
-  process.exit();
-});
+  disconnect() {
+    this.socket.on(SystemConstants.DISCONNECT_KEY, () => {
+      print(SystemConstants.DISCONNECT_MSG);
+      process.exit();
+    });
+  }
+
+  getRoomList() {
+    this.socket.on(SystemConstants.ROOM_LIST, (rooms) => {
+      CommonService.joinRoomHandler(this.socket, rooms, this.name);
+    });
+  }
+}
+
+const clientTest = new ClientTest();
+export default clientTest;

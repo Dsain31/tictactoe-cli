@@ -99,11 +99,4 @@ export default class Game {
   private createKeyValuePairsMapObject() {
     Array.from(Array(9).keys()).forEach((c) => this.board.set(c + 1, null));
   }
-
-  private createGameBoardAfterSecondPlayerJoined([pX, pO = undefined]: any) {
-    this.participants = {
-      [pX]: "X",
-      [pO]: "O",
-    };
-  }
 }

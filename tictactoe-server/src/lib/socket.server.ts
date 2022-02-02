@@ -12,26 +12,17 @@ export class SocketServer {
 
   public connect() {
     this.io.on(SystemConstants.CONNECTION_KEY, (_socket) => {
-      // console.log('rooms', this.io.sockets.adapter.rooms)
       console.log(`${SystemConstants.NEW_USER_CONNECTED_MSG} ${_socket.id}`);
-      // _socket.on("enter", (username) => {
-      //   console.log(`${_socket.id} has entered.`);
-      //   this.app.handleEnter(_socket, username)
-      // });
       _socket.on(SystemConstants.ENTER_KEY, (data) => {
         console.log(`${_socket.id} : ${data} has entered.`);
         this.app.handleEnter(_socket, data);
-        // console.log('rooms', this.io.sockets.adapter.rooms);
-        // this.getUserDataFromRooms(_socket.id)
       });
       _socket.on(SystemConstants.JOIN_KEY, (data) => {
-        console.log(`${_socket.id} : ${data} has joined.`);
-
-        // _socket.join(_socket.id);
-        this.app.handleJoin(_socket, data, this.io.sockets.adapter.rooms);
-        // const rooms = this.app.getRoomList();
-        // console.log(rooms);
-        // this.io.emit(SystemConstants.ROOM_LIST, JSON.stringify({ data: rooms }))
+        console.log(`${_socket.id} : ${data.username} has joined.`);
+        this.app.handleJoin(_socket, data);
+      });
+      _socket.on(SystemConstants.SHOW_ROOMS_KEY, (data) => {
+        this.app.getRoomList(_socket);
       });
       _socket.on(SystemConstants.MOVE_KEY, (move) => {
         console.log(`${_socket.id} has made move.`);

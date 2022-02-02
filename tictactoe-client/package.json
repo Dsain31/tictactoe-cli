@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "tsc": "tsc --project tsconfig.json",
-    "start": "npx npm run tsc && ts-node src/client-test.ts"
+    "start": "npx npm run tsc && ts-node src/client.ts"
   },
   "author": "deepak sain",
   "license": "ISC",

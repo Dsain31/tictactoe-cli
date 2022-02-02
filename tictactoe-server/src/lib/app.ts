@@ -5,7 +5,6 @@ import { Socket, Server } from 'socket.io';
 import Player from "./player";
 import { PlayerMap } from "../interface/room.interface";
 import CommonService from "../utils/services/common.service";
-import Game from "./game";
 
 export default class App {
   io: Server;
@@ -29,6 +28,7 @@ export default class App {
       } else {
         this.addToQueueWhenUserNotExist(socket, username);
       }
+      // console.log('roomList', this.roomListData)
     } else {
       socket.disconnect();
       socket.emit(SystemConstants.INFO_KEY, SystemConstants.ROOM_LIMIT_MSG);
@@ -98,6 +98,7 @@ export default class App {
     const roomName = CommonService.getRoomName(socket.adapter);
     this.room.delete(socket.id);
     this.room.delete(roomName);
+    this.roomListData.delete(roomName);
     this.userController.remove(socket);
     this.roomController.remove(roomName);
     socket.disconnect();
@@ -106,56 +107,18 @@ export default class App {
 
   private addToQueueWhenUserNotExist(socket: Socket, username: string) {
     this.userController.add2Queue(socket, username);
-    // if (this.userController.queueSize >= 2) {
-    //   const players = this.userController.add2Store();
-    //   this.matchTwoParticipateInGame(players);
-    // } else {
     const player = this.userController.addOneStore();
     this.createRoomHandler(player);
     socket.emit(SystemConstants.INFO_KEY, SystemConstants.WAITING_MSG);
-    // }
-    // console.log('this.room', this.room);
-
+    // console.log('roomList', this.roomListData)
   }
 
-  private matchTwoParticipateInGame(players: Player[]) {
-    const [playerX, playerO] = players;
-    const pXSocketID = playerX.socket.id;
-    const pXUsername = playerX.username;
-    const pOSocketID = playerO.socket.id;
-    const pOUsername = playerO.username;
-    const newGame = this.roomController.create([pXSocketID, pOSocketID]);
-    const roomID = newGame.gameID;
-    newGame.init();
-    // players join the room
-    playerX.socket.join(roomID);
-    playerO.socket.join(roomID);
-    // roomID => players
-    this.room.set(roomID, {
-      playerX: { id: pXSocketID, username: pXUsername },
-      playerO: { id: pOSocketID, username: pOUsername }
-    });
-    // player => room
-    this.room.set(pXSocketID, roomID);
-    this.room.set(pOSocketID, roomID);
-    this.io.to(pXSocketID)
-      .emit(SystemConstants.INFO_KEY, `${SystemConstants.GAME_START_MSG} ${SystemConstants.PLAYER_X_MSG}`);
-    this.io.to(pOSocketID)
-      .emit(SystemConstants.INFO_KEY, `${SystemConstants.GAME_START_MSG} ${SystemConstants.PLAYER_O_MSG}`);
-    this.io.to(roomID)
-      .emit(SystemConstants.PROGRESS_KEY, newGame.progress);
-    this.io.to(roomID)
-      .emit(SystemConstants.SCOREBOARD_KEY, JSON.stringify(newGame.scoreboard));
-  }
-
-  handleJoin(socket: Socket, username: string, rooms: any) {
-    this.userController.add2Queue(socket, username);
+  handleJoin(socket: Socket, data: { username: string, roomName: string }) {
+    this.userController.add2Queue(socket, data.username);
     if (this.userController.queueSize >= 2) {
       const players = this.userController.add2Store();
-      this.joinRoomHandler(players, socket, rooms)
+      this.joinRoomHandler(players, data)
     }
-    const roomList = JSON.stringify(Array.from(this.roomListData.entries()));
-    socket.emit(SystemConstants.ROOM_LIST, roomList);
   }
 
   private createRoomHandler(player: Player[]) {
@@ -174,13 +137,18 @@ export default class App {
     });
   }
 
-  private joinRoomHandler(player: Player[], socket: any, rooms: any) {
+  getRoomList(socket: Socket) {
+    const roomList = JSON.stringify(Array.from(this.roomListData.entries()));
+    socket.emit(SystemConstants.ROOM_LIST, roomList);
+  }
+
+  private joinRoomHandler(player: Player[], data: { username: string, roomName: string }) {
     const [playerX, playerO] = player;
     const pXSocketID = playerX.socket.id;
     const pXUsername = playerX.username;
     const pOSocketID = playerO.socket.id;
     const pOUsername = playerO.username;
-    const roomName = this.room.get(playerX.socket.id)
+    const roomName = data.roomName;
     const newGame = this.roomController.createRoom(roomName, [pXSocketID, pOSocketID]);
     const roomID = newGame.gameID;
     newGame.init();
@@ -212,10 +180,5 @@ export default class App {
       .emit(SystemConstants.PROGRESS_KEY, newGame.progress);
     this.io.to(roomID)
       .emit(SystemConstants.SCOREBOARD_KEY, JSON.stringify(newGame.scoreboard));
-  }
-
-  getRoomList(socket?: Server) {
-    // socket.emit(SystemConstants.ROOM_LIST, JSON.stringify(this.room));
-    return this.room;
   }
 }

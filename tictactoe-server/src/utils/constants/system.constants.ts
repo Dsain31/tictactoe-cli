@@ -28,6 +28,7 @@ export const SystemConstants = {
   NEW_USER_CONNECTED_MSG: `New user connected to the server: `,
   ENTER_KEY: "enter",
   JOIN_KEY: "enter-join",
+  SHOW_ROOMS_KEY: "showRoomList",
   MOVE_KEY: "move",
   TIE_KEY: "tie",
   REPLAY_CONFIRM_KEY: "replayConfirm",
