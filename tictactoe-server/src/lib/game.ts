@@ -8,7 +8,7 @@ export default class Game {
   scoreboard: any;
   _status: number;
   _turn: string;
-  participants: { [x: number]: string; };
+  participants: { [x: string]: string; };
   replayConfirmed: number;
   constructor(gameID: any, [pX, pO]: any) {
     this.gameID = gameID;

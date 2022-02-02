@@ -27,7 +27,8 @@ export default class CommonService {
     return progress.replace(/\n/g, "").split("").every((s) => s !== ".");
   };
 
-  // static getRoomName(socket: Socket) {
-  //   return new MultiplayerRoomController().getCurrentRoomID(socket)[0];
-  // }
+  static getRoomName(socket: Socket) {
+    const roomNames = new MultiplayerRoomController().getCurrentRoomID(socket)
+    return roomNames && roomNames.length > 0 ? roomNames[0] : roomNames;
+  }
 }

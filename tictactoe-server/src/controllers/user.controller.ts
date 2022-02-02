@@ -2,8 +2,8 @@ import { Socket } from "socket.io";
 import Player from "../lib/player";
 
 export default class UserController {
-  players: Map<any, any>;
-  queue: Player[];
+  players!: Map<any, any>;
+  queue!: Player[];
   users!: any[];
   constructor() {
     this.players = new Map();
@@ -26,8 +26,9 @@ export default class UserController {
   getPlayer(socketID: any) {
     return this.players.get(socketID);
   }
-  remove(socketID: any) {
-    this.players.delete(socketID);
+  remove(socket: Socket) {
+    const test = this.players.delete(socket.id);
+    this.queue = this.queue.filter((q) => q.socket.id !== socket.id);
   }
   checkExists(username: string) {
     const users = [...this.players.values(), ...this.queue];
@@ -39,6 +40,5 @@ export default class UserController {
     const [p1] = onePlayer;
     this.players.set(p1.socket.id, p1);
     return onePlayer;
-
   }
 }

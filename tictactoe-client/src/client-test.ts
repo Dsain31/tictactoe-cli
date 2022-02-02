@@ -36,10 +36,9 @@ class ClientTest {
   }
 
   initializeConnection() {
-    this.socket.on("connect", () => {
+    this.socket.on(SystemConstants.CONNECT_KEY, () => {
 
       console.log(`${SystemConstants.CONNECTION_MSG} ${this.name} (Choose an option)`);
-      console.log(this.socket.id);
       topHeaderText(SystemConstants.OPTIONS_START);
       // if (this.socket.id) {
       //   test(SystemConstants.OPTIONS_JOIN);
@@ -47,7 +46,6 @@ class ClientTest {
       // }
 
       promptOption((data: { optionChosen: any }) => {
-        console.log(this.options.includes(data.optionChosen));
         if (!this.options.includes(data.optionChosen)) {
           print(SystemConstants.INVALID_MSG)
         }
@@ -82,11 +80,10 @@ class ClientTest {
         // }
         const choseCases: any = {
           [SystemConstants.START]: () => {
-            this.socket.emit("enter", this.name);
+            this.socket.emit(SystemConstants.ENTER_KEY, this.name);
           },
           [SystemConstants.JOIN]: () => {
-            console.log('join');
-            this.socket.emit("enter-join", this.name);
+            this.socket.emit(SystemConstants.JOIN_KEY, this.name);
           },
           [SystemConstants.SPECTATE]: () => {
 
@@ -117,52 +114,52 @@ class ClientTest {
   }
 
   checkExistsUser() {
-    this.socket.on("uname-exists", (msg) => {
+    this.socket.on(SystemConstants.UNAME_EXISTS_KEY, (msg) => {
       print(msg);
       askUsername((data: { username: any; }) => {
-        this.socket.emit("enter", data.username);
+        this.socket.emit(SystemConstants.ENTER_KEY, data.username);
       });
     });
   }
 
   playingProgressBoard() {
-    this.socket.on("progress", (msg) => {
+    this.socket.on(SystemConstants.PROGRESS_KEY, (msg) => {
       drawBoard(msg.split("|"), (move: any) => {
-        this.socket.emit("move", move);
+        this.socket.emit(SystemConstants.MOVE_KEY, move);
       });
     });
   }
 
   showMessages() {
-    this.socket.on("info", (msg) => {
+    this.socket.on(SystemConstants.INFO_KEY, (msg) => {
       print(msg);
       clearPrint();
     });
   }
 
   checkGameIsOverOrNot() {
-    this.socket.on("over", (msg) => {
+    this.socket.on(SystemConstants.OVER_KEY, (msg) => {
       showGameOver(msg);
     });
   }
 
   replayConfirm() {
-    this.socket.on("replay", (msg) => {
+    this.socket.on(SystemConstants.REPLAY_KEY, (msg) => {
       confirmReplay(msg, (value: any) => {
-        this.socket.emit("replayConfirm", value);
+        this.socket.emit(SystemConstants.REPLAY_CONFIRM_KEY, value);
       });
     });
   }
   initializeScoreboard() {
-    this.socket.on("scoreboard", (msg) => {
+    this.socket.on(SystemConstants.SCOREBOARD_KEY, (msg) => {
       const { total, X, O, tie } = JSON.parse(msg);
       printScoreboard(`[Total: ${total} | X: ${X} | O: ${O} | tie: ${tie}]`);
     });
   }
 
   disconnect() {
-    this.socket.on("disconnect", () => {
-      print("Disconnected!");
+    this.socket.on(SystemConstants.DISCONNECT_KEY, () => {
+      print(SystemConstants.DISCONNECT_MSG);
       process.exit();
     });
   }

@@ -8,7 +8,7 @@ export default class MultiplayerRoomController {
     this.ongoing = new Map();
   }
   create(participants: any[]) {
-    const game = new Game(`${SystemConstants.roomPrefix}${SystemConstants.genKey()}`, participants);
+    const game = new Game(`${SystemConstants.roomPrefix}${SystemConstants.GEN_KEY()}`, participants);
     this.ongoing.set(game.gameID, game);
     return game;
   }
@@ -26,7 +26,7 @@ export default class MultiplayerRoomController {
   }
 
   generateRoomId() {
-    return `${SystemConstants.roomPrefix}${SystemConstants.genKey()}`;
+    return `${SystemConstants.roomPrefix}${SystemConstants.GEN_KEY()}`;
   }
   createRoom(roomId: string, participants: any[]) {
     const game = new Game(roomId, participants);

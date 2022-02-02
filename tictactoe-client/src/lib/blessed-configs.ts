@@ -1,23 +1,14 @@
 import blessed from 'blessed';
 import figlet from "figlet";
+import { SystemConstants } from '../utils/system.constants';
 
 const screen = blessed.screen({
   smartCSR: true,
 });
-screen.title = "Tic Tac Toe";
+screen.title = SystemConstants.TITLE;
 // Quit on Escape, q, or Control-C.
 screen.key(["escape", "q", "C-c"], function (ch, key) {
   return process.exit(0);
-});
-const title = blessed.text({
-  parent: screen,
-  align: "center",
-  // content: figlet.textSync("Tic-Tac-Toe", {
-  //   horizontalLayout: "default"
-  // }),
-  style: {
-    fg: "blue",
-  },
 });
 const warning = blessed.text({
   parent: screen,
@@ -26,7 +17,7 @@ const warning = blessed.text({
   align: "center",
   style: {
     fg: "yellow",
-  },
+  }
 });
 const boardLayout = blessed.layout({
   parent: screen,
@@ -152,7 +143,7 @@ function print(msg: string) {
   screen.render();
 }
 function clearPrint() {
-  setTimeout(() => print(""), 4000);
+  setTimeout(() => print(""), 5000);
 }
 function confirmReplay(msg: string, callback: (arg0: string) => void) {
   const confirm = blessed.question({
@@ -206,15 +197,7 @@ function showGameOver(msg: string) {
 
 function topHeaderText(scores: string) {
   const testOptions = blessed.text({
-    parent: screen,
-    top: 8,
-    clickable: false,
-    style: {
-      visible: true,
-      border: {
-        fg: "cyan",
-      },
-    },
+    parent: screen
   });
   testOptions.setContent(scores);
   testOptions.show();

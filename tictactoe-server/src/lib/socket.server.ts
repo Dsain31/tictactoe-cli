@@ -1,5 +1,6 @@
 import { Server } from 'http'
 import * as socket from 'socket.io'
+import { SystemConstants } from '../utils/constants/system.constants';
 import App from './app';
 export class SocketServer {
   public io: socket.Server;
@@ -10,44 +11,38 @@ export class SocketServer {
   }
 
   public connect() {
-    this.io.on('connection', (_socket) => {
+    this.io.on(SystemConstants.CONNECTION_KEY, (_socket) => {
       // console.log('rooms', this.io.sockets.adapter.rooms)
-      console.log(`New user connected to the server: ${_socket.id}`);
+      console.log(`${SystemConstants.NEW_USER_CONNECTED_MSG} ${_socket.id}`);
       // _socket.on("enter", (username) => {
       //   console.log(`${_socket.id} has entered.`);
       //   this.app.handleEnter(_socket, username)
       // });
-      _socket.on("enter", (data) => {
+      _socket.on(SystemConstants.ENTER_KEY, (data) => {
         console.log(`${_socket.id} : ${data} has entered.`);
         this.app.handleEnter(_socket, data);
         // console.log('rooms', this.io.sockets.adapter.rooms);
         // this.getUserDataFromRooms(_socket.id)
       });
-      _socket.on("enter-join", (data) => {
+      _socket.on(SystemConstants.JOIN_KEY, (data) => {
         console.log(`${_socket.id} : ${data} has joined.`);
 
         // _socket.join(_socket.id);
         this.app.handleJoin(_socket, data, this.io.sockets.adapter.rooms);
         // this.app.handleEnter(_socket, data);
       });
-      _socket.on("move", (move) => {
+      _socket.on(SystemConstants.MOVE_KEY, (move) => {
         console.log(`${_socket.id} has made move.`);
         this.app.handlePlay(_socket, move);
       });
-      _socket.on("replayConfirm", (confirmed) => {
+      _socket.on(SystemConstants.REPLAY_CONFIRM_KEY, (confirmed) => {
         console.log(`${_socket.id} has confirmed replay.`);
         this.app.handleReplay(_socket, confirmed);
       });
-      _socket.on("disconnect", () => {
+      _socket.on(SystemConstants.DISCONNECT_KEY, () => {
         console.log(`${_socket.id} is disconnected.`);
-        _socket.disconnect();
         this.app.handleDisconnect(_socket);
       });
     })
-  }
-
-  private getUserDataFromRooms(id: string) {
-    const test = this.io.sockets.adapter.rooms.get(id);
-    console.log(test)
   }
 }

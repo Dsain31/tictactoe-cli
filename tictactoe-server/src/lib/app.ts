@@ -5,6 +5,7 @@ import { Socket, Server } from 'socket.io';
 import Player from "./player";
 import { PlayerMap } from "../interface/room.interface";
 import CommonService from "../utils/services/common.service";
+import Game from "./game";
 
 export default class App {
   io: Server;
@@ -18,52 +19,56 @@ export default class App {
     this.roomController = new MultiplayerRoomController();
   }
 
-  handleEnter(socket: any, username: string) {
+  handleEnter(socket: Socket, username: string) {
+    // console.log('this.room', this.room);
     const exists = this.userController.checkExists(username);
-    console.log('username', username);
     if (exists) {
-      socket.emit("uname-exists", SystemConstants.messages.msg_uname_exists);
+      socket.emit(SystemConstants.UNAME_EXISTS_KEY, SystemConstants.USERNAME_EXISTS_MSG);
     } else {
       this.addToQueueWhenUserNotExist(socket, username);
     }
 
   }
   handlePlay(socket: Socket, message: string) {
-    const normalized = SystemConstants.normalize(message);
+    const normalized = SystemConstants.NORMALIZE(message);
     const roomID = this.room.get(socket.id);
     const game = this.roomController.getRoom(roomID);
+    if (game && game.participants) {
     const currentPlayer = game.participants[socket.id];
     const move = Number(normalized);
     const playerTurn = game._turn === currentPlayer;
     // game has started, move is valid and is the player's turn
-    if (playerTurn && game.status === SystemConstants.STARTED) {
-      const accepted = game.makeMove(currentPlayer, move);
-      if (accepted) {
-        const progress = game.progress;
-        this.io.to(roomID).emit("progress", progress);
-        if (game.status === SystemConstants.FINISHED) {
-          // game with decisive outcome
-          socket.emit("over", SystemConstants.messages.msg_win);
-          socket.broadcast.to(roomID).emit("over", SystemConstants.messages.msg_lose);
-          this.io.to(roomID).emit("replay", SystemConstants.messages.msg_replay);
-          game.updateScoreboard(currentPlayer);
-          game.reset();
-        } else if (game.status === SystemConstants.TIED) {
-          // game has tied
-          this.io.to(roomID).emit("over", SystemConstants.messages.msg_tie);
-          this.io.to(roomID).emit("replay", SystemConstants.messages.msg_replay);
-          game.updateScoreboard("tie");
-          game.reset();
-        } else {
-          // toggle turns
-          socket.broadcast.to(roomID).emit("progress", progress);
-          game.toggleTurn();
+      if (playerTurn && game.status === SystemConstants.STARTED) {
+        const accepted = game.makeMove(currentPlayer, move);
+        if (accepted) {
+          const progress = game.progress;
+          this.io.to(roomID).emit(SystemConstants.PROGRESS_KEY, progress);
+          if (game.status === SystemConstants.FINISHED) {
+            // game with decisive outcome
+            socket.emit(SystemConstants.OVER_KEY, SystemConstants.WIN_MSG);
+            socket.broadcast.to(roomID).emit(SystemConstants.OVER_KEY, SystemConstants.LOST_MSG);
+            this.io.to(roomID).emit(SystemConstants.REPLAY_KEY, SystemConstants.REPLAY_MSG);
+            game.updateScoreboard(currentPlayer);
+            game.reset();
+          } else if (game.status === SystemConstants.TIED) {
+            // game has tied
+            this.io.to(roomID).emit(SystemConstants.OVER_KEY, SystemConstants.TIE_MSG);
+            this.io.to(roomID).emit(SystemConstants.REPLAY_KEY, SystemConstants.REPLAY_MSG);
+            game.updateScoreboard(SystemConstants.TIE_KEY);
+            game.reset();
+          } else {
+            // toggle turns
+            socket.broadcast.to(roomID).emit(SystemConstants.PROGRESS_KEY, progress);
+            game.toggleTurn();
+          }
         }
+      } else if (!playerTurn) {
+        socket.emit(SystemConstants.INFO_KEY, SystemConstants.NOT_MOVE_YET_MSG);
+      } else {
+        socket.emit(SystemConstants.INFO_KEY, SystemConstants.GAME_NOT_START_MSG);
       }
-    } else if (!playerTurn) {
-      socket.emit("info", SystemConstants.messages.msg_not_yet);
     } else {
-      socket.emit("info", SystemConstants.messages.msg_game_0);
+      this.io.to(roomID).emit(SystemConstants.INFO_KEY, SystemConstants.LEFT_MSG);
     }
   }
   handleReplay(socket: any, confirmed: any) {
@@ -78,18 +83,19 @@ export default class App {
       game.reset();
       game.init();
       this.io.to(roomID)
-        .emit("scoreboard", JSON.stringify(game.scoreboard));
-      this.io.to(roomID).emit("info", SystemConstants.messages.msg_game_1);
-      this.io.to(roomID).emit("progress", game.progress);
+        .emit(SystemConstants.SCOREBOARD_KEY, JSON.stringify(game.scoreboard));
+      this.io.to(roomID).emit(SystemConstants.INFO_KEY, SystemConstants.GAME_START_MSG);
+      this.io.to(roomID).emit(SystemConstants.PROGRESS_KEY, game.progress);
     }
   }
-  handleDisconnect(socketID: any) {
-    const roomID = this.room.get(socketID);
-    // console.log('room', this.room);
-    // console.log('roomid', roomID);
-    this.room.delete(socketID);
-    this.userController.remove(socketID);
-    this.io.to(roomID).emit("info", SystemConstants.messages.msg_resign);
+  handleDisconnect(socket: any) {
+    const roomName = CommonService.getRoomName(socket.adapter);
+    this.room.delete(socket.id);
+    this.room.delete(roomName);
+    this.userController.remove(socket);
+    this.roomController.remove(roomName);
+    socket.disconnect();
+    this.io.to(roomName).emit(SystemConstants.INFO_KEY, SystemConstants.LEFT_MSG);
   }
 
   private addToQueueWhenUserNotExist(socket: Socket, username: string) {
@@ -100,7 +106,7 @@ export default class App {
     // } else {
     const player = this.userController.addOneStore();
     this.createRoomHandler(player);
-      socket.emit("info", SystemConstants.messages.msg_waiting);
+    socket.emit(SystemConstants.INFO_KEY, SystemConstants.WAITING_MSG);
     // }
     // console.log('this.room', this.room);
 
@@ -127,17 +133,17 @@ export default class App {
     this.room.set(pXSocketID, roomID);
     this.room.set(pOSocketID, roomID);
     this.io.to(pXSocketID)
-      .emit("info", `${SystemConstants.messages.msg_game_1} ${SystemConstants.messages.msg_player_x}`);
+      .emit(SystemConstants.INFO_KEY, `${SystemConstants.GAME_START_MSG} ${SystemConstants.PLAYER_X_MSG}`);
     this.io.to(pOSocketID)
-      .emit("info", `${SystemConstants.messages.msg_game_1} ${SystemConstants.messages.msg_player_o}`);
+      .emit(SystemConstants.INFO_KEY, `${SystemConstants.GAME_START_MSG} ${SystemConstants.PLAYER_O_MSG}`);
     this.io.to(roomID)
-      .emit("progress", newGame.progress);
+      .emit(SystemConstants.PROGRESS_KEY, newGame.progress);
     this.io.to(roomID)
-      .emit("scoreboard", JSON.stringify(newGame.scoreboard));
+      .emit(SystemConstants.SCOREBOARD_KEY, JSON.stringify(newGame.scoreboard));
   }
 
   handleJoin(socket: Socket, username: string, rooms: any) {
-    console.log('this.room', this.room);
+    // console.log('this.room', this.room);
     this.userController.add2Queue(socket, username);
     if (this.userController.queueSize >= 2) {
       const players = this.userController.add2Store();
@@ -175,14 +181,13 @@ export default class App {
 
     // player => room
     this.room.set(pOSocketID, roomID);
-    console.log('this.room', this.room);
     this.io.to(pXSocketID)
-      .emit("info", `${SystemConstants.messages.msg_game_1} ${SystemConstants.messages.msg_player_x}`);
+      .emit(SystemConstants.INFO_KEY, `${SystemConstants.GAME_START_MSG} ${SystemConstants.PLAYER_X_MSG}`);
     this.io.to(pOSocketID)
-      .emit("info", `${SystemConstants.messages.msg_game_1} ${SystemConstants.messages.msg_player_o}`);
+      .emit(SystemConstants.INFO_KEY, `${SystemConstants.GAME_START_MSG} ${SystemConstants.PLAYER_O_MSG}`);
     this.io.to(roomID)
-      .emit("progress", newGame.progress);
+      .emit(SystemConstants.PROGRESS_KEY, newGame.progress);
     this.io.to(roomID)
-      .emit("scoreboard", JSON.stringify(newGame.scoreboard));
+      .emit(SystemConstants.SCOREBOARD_KEY, JSON.stringify(newGame.scoreboard));
   }
 }
