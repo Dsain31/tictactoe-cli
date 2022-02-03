@@ -105,29 +105,26 @@ export default class App {
   }
 
   private addToQueueWhenUserNotExist(socket: Socket, username: string) {
-    this.userController.add2Queue(socket, username);
-    const player = this.userController.addOneStore();
+    this.userController.reset();
+    const player = { socket, username };
     this.createRoomHandler(player);
     socket.emit(SystemConstants.INFO_KEY, SystemConstants.WAITING_MSG);
   }
 
   handleJoin(socket: Socket, data: { username: string, roomName: string }) {
-    this.userController.add2Queue(socket, data.username);
-    if (this.userController.queueSize >= 2) {
-      const players = this.userController.add2Store();
-      this.joinRoomHandler(players, data)
-    }
+    const player = { ...this.room.get(data.roomName) }.player;
+    const players = [player, new Player(socket, data.username)];
+    this.joinRoomHandler(players, data)
   }
 
-  private createRoomHandler(player: Player[]) {
-    const [playerX, playerO] = player;
-    const pXSocketID = playerX.socket.id;
-    const pXUsername = playerX.username;
+  private createRoomHandler(player: Player) {
+    const pXSocketID = player.socket.id;
+    const pXUsername = player.username;
     const roomID = this.roomController.generateRoomId();
     // players join the room
-    playerX.socket.join(roomID);
+    player.socket.join(roomID);
     this.room.set(roomID, {
-      playerX: pXUsername,
+      player
     });
     this.room.set(pXSocketID, roomID);
     this.roomListData.set(roomID, {
@@ -140,8 +137,8 @@ export default class App {
     socket.emit(SystemConstants.ROOM_LIST, roomList);
   }
 
-  private joinRoomHandler(player: Player[], data: { username: string, roomName: string }) {
-    const [playerX, playerO] = player;
+  private joinRoomHandler(players: Player[], data: { username: string, roomName: string }) {
+    const [playerX, playerO] = players;
     const pXSocketID = playerX.socket.id;
     const pXUsername = playerX.username;
     const pOSocketID = playerO.socket.id;
@@ -155,15 +152,11 @@ export default class App {
     playerO.socket.join(roomID);
     // roomID => players
     this.room.set(roomID, {
-      // playerX: { id: pXSocketID, username: pXUsername },
-      // playerO: { id: pOSocketID, username: pOUsername },
-      playerX: pXUsername,
-      playerO: pOUsername
+      playerX,
+      playerO
     });
 
     this.roomListData.set(roomID, {
-      // playerX: { id: pXSocketID, username: pXUsername },
-      // playerO: { id: pOSocketID, username: pOUsername },
       playerX: pXUsername,
       playerO: pOUsername
     });

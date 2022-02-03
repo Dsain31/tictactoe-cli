@@ -42,7 +42,12 @@ export default class UserController {
     const onePlayer = [this.tempData[0]];
     const [p1] = onePlayer;
     this.players.set(p1.socket.id, p1);
-    this.tempData = [];
     return onePlayer;
+  }
+
+  reset() {
+    this.tempData = [];
+    this.queue = [];
+    this.players = new Map();
   }
 }
