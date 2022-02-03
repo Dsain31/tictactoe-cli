@@ -22,3 +22,18 @@ npm install
      npm run start localhost:3000 deepak
 
 ## Screenshots
+![](assets/Screenshot%20from%202022-02-02%2021-25-53.png)
+
+![](assets/Screenshot%20from%202022-02-02%2021-26-01.png)
+
+![](assets/Screenshot%20from%202022-02-02%2022-00-32.png)
+
+![](assets/Screenshot%20from%202022-02-02%2022-31-29.png)
+
+![](assets/Screenshot%20from%202022-02-02%2022-22-32.png)
+
+![](assets/Screenshot%20from%202022-02-02%2022-22-37.png)
+
+![](assets/Screenshot%20from%202022-02-02%2022-22-44.png)
+
+![](assets/Screenshot%20from%202022-02-02%2022-32-00.png)
